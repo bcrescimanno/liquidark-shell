@@ -7,14 +7,11 @@ import qs.Config as Config
 import qs.services
 
 WrapperMouseArea {
-    property var updateData: Updates.updateData
-
     RowLayout {
         Text {
-            id: osIcon
             text: "\u{f08c7}"
             color: Config.Style.colors.fg
-            opacity: updateData.length > 0 ? 1 : 0.5
+            opacity: Updates.updateData.length > 0 ? 1 : 0.5
             font.pixelSize: Config.Style.fontSize.larger
             font.family: Config.Style.fontFamily.nerd
 
@@ -27,12 +24,11 @@ WrapperMouseArea {
         }
 
         Text {
-            id: updateCount
             color: Config.Style.colors.fg
             font.pixelSize: Config.Style.fontSize.normal
             font.family: Config.Style.fontFamily.nerd
-            opacity: updateData.length > 0 ? 1 : 0.5
-            text: updateData.length > 0 ? updateData.length : ""
+            opacity: Updates.updateData.length > 0 ? 1 : 0.5
+            text: Updates.checking ? "…" : (Updates.updateData.length > 0 ? Updates.updateData.length : "")
 
             Behavior on opacity {
                 NumberAnimation {
@@ -44,8 +40,4 @@ WrapperMouseArea {
     }
 
     hoverEnabled: true
-
-    Component.onCompleted: () => {
-        Updates.refresh();
-    }
 }

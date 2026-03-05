@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Widgets
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Config as Config
 import qs.Modules as Modules
@@ -10,121 +9,193 @@ import qs.services
 Modules.AnimatedPopupWindow {
     id: mainWindow
 
-    property var updateData: []
-    property var lastCheck: Updates.lastCheck
+    topMargin: 12
+    rightMargin: 16
+    bottomMargin: 12
+    leftMargin: 16
 
-    onLastCheckChanged: {
-        loadingIndicator.stop();
-        let current = refreshButton.rotation % -360;
-        if (current > 0)
-            current -= 360;
+    readonly property var repoUpdates: Updates.updateData.filter(u => u.source === "repo")
+    readonly property var aurUpdates: Updates.updateData.filter(u => u.source === "aur")
 
-        let goal = Math.abs(current - -180) < (Math.abs(current - -360)) ? -180 : -360;
-
-        let distance = Math.abs(current - goal);
-        let duration = (distance / 360) * 1000;
-
-        loadingLander.duration = duration;
-        loadingLander.from = current;
-        loadingLander.to = goal;
-        loadingLander.start();
-    }
-
-    topMargin: 10
-    rightMargin: 20
-    bottomMargin: 10
-    leftMargin: 20
-
-    ColumnLayout {
-        id: updatesTable
-        spacing: 10
-
-        Repeater {
-            model: updateData
-
-            Item {
-
-                Layout.preferredHeight: updateName.implicitHeight
-                // TODO: don't hard code a gap here
-                Layout.preferredWidth: updateName.implicitWidth + updateVersion.implicitWidth + 50
-                Layout.fillWidth: true
-
-                Text {
-                    id: updateName
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    font {
-                        bold: true
-                        pixelSize: Config.Style.fontSize.normal
-                        family: Config.Style.fontFamily.sans
-                    }
-                    text: modelData.name
-                    color: Config.Style.colors.fg
-                }
-                Text {
-                    id: updateVersion
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    font {
-                        pixelSize: Config.Style.fontSize.normal
-                        family: Config.Style.fontFamily.sans
-                    }
-                    text: modelData.version
-                    color: Config.Style.colors.fg
+    // Smoothly complete the current rotation when checking finishes.
+    Connections {
+        target: Updates
+        function onCheckingChanged() {
+            if (Updates.checking) {
+                refreshIcon.rotation = 0;
+                spinAnimation.restart();
+            } else {
+                spinAnimation.stop();
+                let current = refreshIcon.rotation % 360;
+                let remaining = current > 0 ? (360 - current) / 360 : 0;
+                if (remaining > 0.01) {
+                    landAnimation.duration = Math.round(remaining * spinAnimation.duration);
+                    landAnimation.from = current;
+                    landAnimation.to = 360;
+                    landAnimation.start();
+                } else {
+                    refreshIcon.rotation = 0;
                 }
             }
         }
+    }
 
+    ColumnLayout {
+        spacing: 0
+
+        // Repo updates section
+        ColumnLayout {
+            visible: mainWindow.repoUpdates.length > 0
+            spacing: 0
+
+            Text {
+                text: "Official (" + mainWindow.repoUpdates.length + ")"
+                color: Config.Style.colors.fg
+                opacity: 0.5
+                font {
+                    pixelSize: Config.Style.fontSize.small
+                    family: Config.Style.fontFamily.sans
+                }
+                Layout.bottomMargin: 6
+            }
+
+            Repeater {
+                model: mainWindow.repoUpdates
+                delegate: UpdateRow { modelData: modelData }
+            }
+        }
+
+        // Spacer between sections
         Item {
+            visible: mainWindow.repoUpdates.length > 0 && mainWindow.aurUpdates.length > 0
+            Layout.preferredHeight: 10
+        }
+
+        // AUR updates section
+        ColumnLayout {
+            visible: mainWindow.aurUpdates.length > 0
+            spacing: 0
+
+            Text {
+                text: "AUR (" + mainWindow.aurUpdates.length + ")"
+                color: Config.Style.colors.accent
+                opacity: 0.8
+                font {
+                    pixelSize: Config.Style.fontSize.small
+                    family: Config.Style.fontFamily.sans
+                }
+                Layout.bottomMargin: 6
+            }
+
+            Repeater {
+                model: mainWindow.aurUpdates
+                delegate: UpdateRow { modelData: modelData }
+            }
+        }
+
+        // Empty state
+        Text {
+            visible: !Updates.checking && Updates.updateData.length === 0 && Updates.lastCheck.getTime() > 0
+            text: "Up to date"
+            color: Config.Style.colors.fg
+            opacity: 0.5
+            font {
+                pixelSize: Config.Style.fontSize.normal
+                family: Config.Style.fontFamily.sans
+            }
+        }
+
+        // Footer: last checked + refresh button
+        Item {
+            Layout.topMargin: mainWindow.repoUpdates.length > 0 || mainWindow.aurUpdates.length > 0 ? 10 : 0
             Layout.preferredHeight: refreshButton.implicitHeight
             Layout.fillWidth: true
+
             Text {
-                id: lastUpdatedText
-                color: Config.Style.colors.fg
+                id: lastCheckedLabel
                 anchors.verticalCenter: parent.verticalCenter
+                color: Config.Style.colors.fg
+                opacity: 0.5
                 font {
                     family: Config.Style.fontFamily.sans
-                    pixelSize: Config.Style.fontSize.normal
+                    pixelSize: Config.Style.fontSize.small
                 }
-                text: "Last updated: " + Qt.formatDateTime(lastCheck, "h:mm ap")
+                text: Updates.lastCheck.getTime() > 0
+                    ? "Checked " + Qt.formatDateTime(Updates.lastCheck, "h:mm ap")
+                    : Updates.checking ? "Checking…" : "Not yet checked"
             }
 
             WrapperMouseArea {
                 id: refreshButton
                 anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                enabled: !Updates.checking
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 
                 Text {
-                    anchors.right: parent.right
+                    id: refreshIcon
                     color: Config.Style.colors.fg
+                    opacity: refreshButton.enabled ? 1 : 0.4
                     font {
                         family: Config.Style.fontFamily.icon
                         pixelSize: Config.Style.fontSize.larger
                     }
                     text: "\ue627"
-                }
 
-                NumberAnimation on rotation {
-                    id: loadingIndicator
-                    from: 0
-                    to: -360
-                    duration: 1000
-                    loops: Animation.Infinite
-                    running: false
-                }
+                    Behavior on opacity {
+                        NumberAnimation { duration: Config.Style.animationDuration.fast }
+                    }
 
-                NumberAnimation {
-                    id: loadingLander
-                    target: refreshButton
-                    property: "rotation"
-                    onFinished: lastUpdatedText.text = "Last updated: " + Qt.formatDateTime(lastCheck, "h:mm ap")
-                }
-                onClicked: {
-                    if (!loadingIndicator.running) {
-                        Updates.refresh();
-                        lastUpdatedText.text = "Refreshing...";
-                        loadingIndicator.start();
+                    NumberAnimation on rotation {
+                        id: spinAnimation
+                        from: 0; to: 360
+                        duration: 1000
+                        loops: Animation.Infinite
+                        running: false
+                    }
+
+                    NumberAnimation on rotation {
+                        id: landAnimation
+                        easing.type: Easing.OutCubic
                     }
                 }
+
+                onClicked: Updates.refresh()
+            }
+        }
+    }
+
+    // Reusable row for a single package entry
+    component UpdateRow: Item {
+        property var modelData
+
+        Layout.preferredHeight: pkgName.implicitHeight + 6
+        Layout.fillWidth: true
+        Layout.minimumWidth: pkgName.implicitWidth + pkgVersion.implicitWidth + 40
+
+        Text {
+            id: pkgName
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: modelData.name
+            color: Config.Style.colors.fg
+            font {
+                bold: true
+                pixelSize: Config.Style.fontSize.normal
+                family: Config.Style.fontFamily.sans
+            }
+        }
+
+        Text {
+            id: pkgVersion
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: modelData.version
+            color: Config.Style.colors.fg
+            opacity: 0.7
+            font {
+                pixelSize: Config.Style.fontSize.small
+                family: Config.Style.fontFamily.mono
             }
         }
     }

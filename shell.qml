@@ -24,7 +24,7 @@ ShellRoot {
                 id: updatesIndicator
                 focus: true
                 onClicked: () => {
-                    if (updateData.length > 0) {
+                    if (Updates.updateData.length > 0 || Updates.lastCheck.getTime() > 0) {
                         archUpdates.open = !archUpdates.open;
                     } else {
                         Updates.refresh();
@@ -36,11 +36,11 @@ ShellRoot {
                         archUpdates.open = false;
                     }
                 }
+
                 CheckUpdates.UpdateWindow {
                     id: archUpdates
-                    updateData: updatesIndicator.updateData
                     anchor.window: topPanel
-                    anchor.rect.y: 40
+                    anchor.rect.y: topPanel.implicitHeight
                 }
             },
             Widgets.WorkspaceIndicators {}
