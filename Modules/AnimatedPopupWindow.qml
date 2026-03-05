@@ -16,7 +16,7 @@ PopupWindow {
     property int delay: 0
     property int speed: Config.Style.animationDuration.normal
 
-    default property alias content: body.children
+    default property alias content: body.data
 
     property alias topMargin: body.topMargin
     property alias bottomMargin: body.bottomMargin
