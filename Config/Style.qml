@@ -16,6 +16,10 @@ Singleton {
     component Colors: JsonObject {
         property string fg: "#f8f8f2"
         property string bg: "#ed282A36"
+        property string accent: "#d6acff"
+        property string wsActive: "#50fa7b"
+        property string wsOccupied: "#bd93f9"
+        property string wsEmpty: "#444b6a"
     }
 
     component Radius: JsonObject {

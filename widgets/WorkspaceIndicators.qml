@@ -6,9 +6,9 @@ import qs.Config as Config
 RowLayout {
     id: root
 
-    property color colOccupied: "#bd93f9"
-    property color colActive: "#50fa7b"
-    property color colEmpty: "#444b6a"
+    property color colOccupied: Config.Style.colors.wsOccupied
+    property color colActive: Config.Style.colors.wsActive
+    property color colEmpty: Config.Style.colors.wsEmpty
     property color colText: Config.Style.colors.fg
     property color colBg: Config.Style.colors.bg
     property string fontFamily: Config.Style.fontFamily.nerd

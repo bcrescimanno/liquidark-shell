@@ -13,7 +13,7 @@ AnimatedPopupWindow {
     property Item anchorTo
 
     border {
-        color: "#eed6acff"
+        color: Config.Style.colors.accent
         width: 2
     }
 
