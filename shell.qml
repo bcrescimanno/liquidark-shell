@@ -25,17 +25,15 @@ ShellRoot {
                 focus: true
                 onClicked: () => {
                     if (updateData.length > 0) {
-                        archUpdates.opened = !archUpdates.opened;
+                        archUpdates.open = !archUpdates.open;
                     } else {
                         Updates.refresh();
                     }
                 }
 
                 Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Escape) {
-                        if (archUpdates.opened) {
-                            archUpdates.opened = false;
-                        }
+                    if (event.key === Qt.Key_Escape && archUpdates.open) {
+                        archUpdates.open = false;
                     }
                 }
                 CheckUpdates.UpdateWindow {

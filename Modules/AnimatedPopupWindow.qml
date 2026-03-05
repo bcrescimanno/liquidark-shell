@@ -52,7 +52,7 @@ PopupWindow {
         focus: true
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape && opened) {
-                opened = false;
+                root.open = false;
             }
         }
 
