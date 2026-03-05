@@ -6,63 +6,91 @@ import Quickshell.Io
 
 Singleton {
     id: root
+
     property var updateData: []
-    property var nextCheck: new Date()
-    property var lastCheck: new Date()
-    property bool hasRun: false
+    property date lastCheck
+    property bool checking: false
 
-    Process {
-        id: checkupdates
-        command: ['checkupdates', '--nocolor']
-
-        onExited: exitCode => {
-            if (exitCode === 0 || exitCode === 1) {
-                updateData = formatUpdates(stdout.text);
-            } else {
-                console.error("Error when checking for updates");
-            }
-        }
-
-        stdout: StdioCollector {}
-    }
-
+    // Run on startup and repeat hourly.
     Timer {
-        id: updateTimer
-        // TODO: Why is this delay required?
-        interval: hasRun ? (3600 * 1000) : 1000
-        running: false
+        interval: 3600 * 1000
         repeat: true
-        onTriggered: () => {
-            hasRun = true;
-            checkupdates.running = true;
-        }
+        running: true
+        triggeredOnStart: true
+        onTriggered: root.refresh()
     }
 
     function refresh() {
-        if (!updateTimer.running) {
-            updateTimer.running = true;
-        } else {
-            hasRun = false;
-            updateTimer.restart();
+        if (checking) return;
+        checking = true;
+        pending.repoData = undefined;
+        pending.aurData = undefined;
+        repoProcess.running = true;
+        aurProcess.running = true;
+    }
+
+    // Collects partial results and finalizes once both processes complete.
+    QtObject {
+        id: pending
+        property var repoData
+        property var aurData
+
+        function tryFinalize() {
+            if (repoData !== undefined && aurData !== undefined) {
+                root.updateData = repoData.concat(aurData);
+                root.lastCheck = new Date();
+                root.checking = false;
+                repoData = undefined;
+                aurData = undefined;
+            }
         }
     }
 
-    function formatUpdates(updates: string): var {
-        // Side effects suck
-        lastCheck = new Date(Date.now());
-        nextCheck = new Date(Date.now() + updateTimer.interval);
+    Process {
+        id: repoProcess
+        command: ['checkupdates', '--nocolor']
+        running: false
 
-        return updates.trim().split("\n").map(update => {
-            update = update.replace(/->/g, "→");
-            let index = update.indexOf(" ");
-
-            if (index !== -1) {
-                return {
-                    name: update.substr(0, index),
-                    version: update.substr(index + 1)
-                };
+        // exit 0 = updates available, 1 = up to date, 2+ = error
+        onExited: exitCode => {
+            if (exitCode === 0 || exitCode === 1) {
+                pending.repoData = parseUpdates(repoStdout.text, "repo");
+            } else {
+                console.error("checkupdates exited with code:", exitCode);
+                pending.repoData = [];
             }
-            return null;
+            pending.tryFinalize();
+        }
+
+        stdout: StdioCollector { id: repoStdout }
+    }
+
+    Process {
+        id: aurProcess
+        command: ['yay', '-Qu', '--aur']
+        running: false
+
+        // exit 0 = updates available, 1 = up to date, 2+ = error
+        onExited: exitCode => {
+            if (exitCode === 0 || exitCode === 1) {
+                pending.aurData = parseUpdates(aurStdout.text, "aur");
+            } else {
+                console.error("yay --aur exited with code:", exitCode);
+                pending.aurData = [];
+            }
+            pending.tryFinalize();
+        }
+
+        stdout: StdioCollector { id: aurStdout }
+    }
+
+    function parseUpdates(text, source) {
+        if (!text.trim()) return [];
+        return text.trim().split("\n").map(line => {
+            line = line.replace(/->/g, "→");
+            let idx = line.indexOf(" ");
+            if (idx === -1) return null;
+            return { name: line.slice(0, idx), version: line.slice(idx + 1), source };
         }).filter(Boolean);
     }
 }
