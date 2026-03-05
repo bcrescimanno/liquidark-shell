@@ -2,6 +2,7 @@
 import Quickshell
 import QtQuick
 import qs.CheckUpdates as CheckUpdates
+import qs.Config as Config
 import qs.services
 import qs.widgets as Widgets
 
@@ -15,7 +16,7 @@ ShellRoot {
         }
 
         implicitHeight: 40
-        backgroundColor: "#ed282A36"
+        backgroundColor: Config.Style.colors.panelBg
 
         focusable: true
 
@@ -40,7 +41,7 @@ ShellRoot {
                 CheckUpdates.UpdateWindow {
                     id: archUpdates
                     anchor.window: topPanel
-                    anchor.rect.y: topPanel.implicitHeight
+                    anchor.rect.y: topPanel.implicitHeight - Config.Style.radius.normal
                 }
             },
             Widgets.WorkspaceIndicators {}
@@ -50,6 +51,7 @@ ShellRoot {
             Widgets.Volume {},
             Widgets.SystemTray {},
             Widgets.Weather {},
+            Widgets.ThemePicker {},
             Widgets.Clock {},
             Widgets.Logout {}
         ]

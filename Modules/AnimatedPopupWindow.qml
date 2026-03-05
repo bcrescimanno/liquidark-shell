@@ -28,8 +28,17 @@ PopupWindow {
 
     onOpenedChanged: {
         if (opened) {
+            if (!closeAnim.running) {
+                body.y = -body.height;
+                body.opacity = 0;
+            }
+            closeAnim.stop();
             visible = true;
             body.focus = true;
+            openAnim.start();
+        } else {
+            openAnim.stop();
+            closeAnim.start();
         }
     }
 
@@ -43,37 +52,55 @@ PopupWindow {
 
     ClippingWrapperRectangle {
         id: body
-        color: Config.Style.colors.bg
-
-        opacity: root.opened ? 1 : 0
-        scale: root.opened ? 1 : 0.8
+        color: Config.Style.colors.panelBg
+        y: 0
+        opacity: 0
         radius: Config.Style.radius.normal
+        topLeftRadius: 0
+        topRightRadius: 0
 
         focus: true
         Keys.onPressed: event => {
-            if (event.key === Qt.Key_Escape && opened) {
+            if (event.key === Qt.Key_Escape && root.opened) {
                 root.open = false;
             }
         }
+    }
 
-        onOpacityChanged: {
-            if (!root.opened && opacity === 0) {
-                root.visible = false;
-            }
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation {
+            target: body
+            property: "y"
+            to: 0
+            duration: root.speed
+            easing.type: Easing.OutCubic
         }
+        NumberAnimation {
+            target: body
+            property: "opacity"
+            to: 1
+            duration: root.speed
+            easing.type: Easing.OutCubic
+        }
+    }
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: speed
-                easing.type: Easing.OutCubic
-            }
+    ParallelAnimation {
+        id: closeAnim
+        NumberAnimation {
+            target: body
+            property: "y"
+            to: -body.height
+            duration: root.speed
+            easing.type: Easing.InCubic
         }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: speed
-                easing.type: Easing.OutBack
-            }
+        NumberAnimation {
+            target: body
+            property: "opacity"
+            to: 0
+            duration: root.speed
+            easing.type: Easing.InCubic
         }
+        onFinished: root.visible = false
     }
 }

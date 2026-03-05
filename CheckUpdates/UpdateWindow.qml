@@ -48,15 +48,25 @@ Modules.AnimatedPopupWindow {
             visible: mainWindow.repoUpdates.length > 0
             spacing: 0
 
-            Text {
-                text: "Official (" + mainWindow.repoUpdates.length + ")"
-                color: Config.Style.colors.fg
-                opacity: 0.5
-                font {
-                    pixelSize: Config.Style.fontSize.small
-                    family: Config.Style.fontFamily.sans
-                }
+            RowLayout {
+                spacing: 6
                 Layout.bottomMargin: 6
+
+                Rectangle {
+                    width: 3
+                    height: 12
+                    radius: 2
+                    color: Config.Style.colors.accent
+                }
+
+                Text {
+                    text: "Official (" + mainWindow.repoUpdates.length + ")"
+                    color: Config.Style.colors.accent
+                    font {
+                        pixelSize: Config.Style.fontSize.small
+                        family: Config.Style.fontFamily.sans
+                    }
+                }
             }
 
             Repeater {
@@ -76,15 +86,25 @@ Modules.AnimatedPopupWindow {
             visible: mainWindow.aurUpdates.length > 0
             spacing: 0
 
-            Text {
-                text: "AUR (" + mainWindow.aurUpdates.length + ")"
-                color: Config.Style.colors.accent
-                opacity: 0.8
-                font {
-                    pixelSize: Config.Style.fontSize.small
-                    family: Config.Style.fontFamily.sans
-                }
+            RowLayout {
+                spacing: 6
                 Layout.bottomMargin: 6
+
+                Rectangle {
+                    width: 3
+                    height: 12
+                    radius: 2
+                    color: Config.Style.colors.info
+                }
+
+                Text {
+                    text: "AUR (" + mainWindow.aurUpdates.length + ")"
+                    color: Config.Style.colors.info
+                    font {
+                        pixelSize: Config.Style.fontSize.small
+                        family: Config.Style.fontFamily.sans
+                    }
+                }
             }
 
             Repeater {
@@ -97,8 +117,7 @@ Modules.AnimatedPopupWindow {
         Text {
             visible: !Updates.checking && Updates.updateData.length === 0 && Updates.lastCheck.getTime() > 0
             text: "Up to date"
-            color: Config.Style.colors.fg
-            opacity: 0.5
+            color: Config.Style.colors.positive
             font {
                 pixelSize: Config.Style.fontSize.normal
                 family: Config.Style.fontFamily.sans
@@ -134,7 +153,7 @@ Modules.AnimatedPopupWindow {
 
                 Text {
                     id: refreshIcon
-                    color: Config.Style.colors.fg
+                    color: Config.Style.colors.accent
                     opacity: refreshButton.enabled ? 1 : 0.4
                     font {
                         family: Config.Style.fontFamily.icon
@@ -169,9 +188,14 @@ Modules.AnimatedPopupWindow {
     component UpdateRow: Item {
         property var pkg
 
+        readonly property var _parts: (pkg?.version ?? "").split(" → ")
+        readonly property string _oldVer: _parts[0]
+        readonly property bool _hasArrow: _parts.length > 1
+        readonly property string _newVer: _hasArrow ? _parts[1] : ""
+
         Layout.preferredHeight: pkgName.implicitHeight + 6
         Layout.fillWidth: true
-        Layout.minimumWidth: pkgName.implicitWidth + pkgVersion.implicitWidth + 40
+        Layout.minimumWidth: pkgName.implicitWidth + versionDisplay.implicitWidth + 40
 
         Text {
             id: pkgName
@@ -186,16 +210,40 @@ Modules.AnimatedPopupWindow {
             }
         }
 
-        Text {
-            id: pkgVersion
+        Row {
+            id: versionDisplay
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: pkg?.version ?? ""
-            color: Config.Style.colors.fg
-            opacity: 0.7
-            font {
-                pixelSize: Config.Style.fontSize.small
-                family: Config.Style.fontFamily.mono
+            spacing: 4
+
+            Text {
+                text: _oldVer
+                color: Config.Style.colors.overlay
+                font {
+                    pixelSize: Config.Style.fontSize.small
+                    family: Config.Style.fontFamily.mono
+                }
+            }
+
+            Text {
+                visible: _hasArrow
+                text: "→"
+                color: Config.Style.colors.overlay
+                font {
+                    pixelSize: Config.Style.fontSize.small
+                    family: Config.Style.fontFamily.mono
+                }
+            }
+
+            Text {
+                visible: _hasArrow
+                text: _newVer
+                color: Config.Style.colors.positive
+                font {
+                    pixelSize: Config.Style.fontSize.small
+                    family: Config.Style.fontFamily.mono
+                    bold: true
+                }
             }
         }
     }

@@ -2,38 +2,28 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 Singleton {
     id: root
 
+    readonly property var colors: Theme.colors
     property Radius radius: Radius {}
-    property Colors colors: Colors {}
     property FontFamily fontFamily: FontFamily {}
     property FontSize fontSize: FontSize {}
     property AnimationDuration animationDuration: AnimationDuration {}
 
-    component Colors: JsonObject {
-        property string fg: "#f8f8f2"
-        property string bg: "#ed282A36"
-        property string accent: "#d6acff"
-        property string wsActive: "#50fa7b"
-        property string wsOccupied: "#bd93f9"
-        property string wsEmpty: "#444b6a"
-    }
-
-    component Radius: JsonObject {
+    component Radius: QtObject {
         property int normal: 8
     }
 
-    component FontFamily: JsonObject {
+    component FontFamily: QtObject {
         property string mono: "JetBrains Mono Nerd Font"
         property string sans: "Inter Variable"
         property string icon: "Material Symbols Outlined"
         property string nerd: "JetBrains Mono Nerd Font"
     }
 
-    component FontSize: JsonObject {
+    component FontSize: QtObject {
         property int smaller: 11
         property int small: 13
         property int normal: 16
@@ -41,7 +31,7 @@ Singleton {
         property int larger: 24
     }
 
-    component AnimationDuration: JsonObject {
+    component AnimationDuration: QtObject {
         property int fast: 120
         property int normal: 240
         property int slow: 360
