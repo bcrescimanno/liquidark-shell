@@ -55,14 +55,14 @@ Singleton {
         return updates.trim().split("\n").map(update => {
             update = update.replace(/->/g, "→");
             let index = update.indexOf(" ");
-            let name, version;
 
             if (index !== -1) {
                 return {
                     name: update.substr(0, index),
-                    version: update.substr(++index)
+                    version: update.substr(index + 1)
                 };
             }
-        });
+            return null;
+        }).filter(Boolean);
     }
 }

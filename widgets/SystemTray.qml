@@ -5,7 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 
 RowLayout {
-    id: testThing
+    id: root
     spacing: 20
 
     Repeater {
