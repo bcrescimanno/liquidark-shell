@@ -1,7 +1,7 @@
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
-import qs.Config
+import qs.Config as Config
 
 RowLayout {
     id: root
@@ -9,10 +9,10 @@ RowLayout {
     property color colOccupied: "#bd93f9"
     property color colActive: "#50fa7b"
     property color colEmpty: "#444b6a"
-    property color colText: Style.colors.fg
-    property color colBg: Style.colors.bg
-    property string fontFamily: Style.fontFamily.nerd
-    property int fontSize: Style.fontSize.normal
+    property color colText: Config.Style.colors.fg
+    property color colBg: Config.Style.colors.bg
+    property string fontFamily: Config.Style.fontFamily.nerd
+    property int fontSize: Config.Style.fontSize.normal
     property int workspaceCount: 10
 
     spacing: 4
@@ -35,16 +35,16 @@ RowLayout {
 
                 width: parent.isActive ? 28 : 24
                 height: parent.isActive ? 28 : 24
-                radius: Style.radius.normal
+                radius: Config.Style.radius.normal
 
                 Behavior on width {
                     NumberAnimation {
-                        duration: Style.animationDuration.fast
+                        duration: Config.Style.animationDuration.fast
                     }
                 }
                 Behavior on height {
                     NumberAnimation {
-                        duration: Style.animationDuration.fast
+                        duration: Config.Style.animationDuration.fast
                     }
                 }
 

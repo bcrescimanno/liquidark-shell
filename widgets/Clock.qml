@@ -2,8 +2,8 @@ import Quickshell
 import Quickshell.Widgets
 import QtQuick
 import qs.services
-import qs.Config
-import qs.Modules
+import qs.Config as Config
+import qs.Modules as Modules
 
 WrapperMouseArea {
     id: clockWidget
@@ -15,17 +15,17 @@ WrapperMouseArea {
     Text {
         id: clockText
         text: Time.format("h:mm ap")
-        color: Style.colors.fg
-        font.family: Style.fontFamily.mono
-        font.pixelSize: Style.fontSize.normal
+        color: Config.Style.colors.fg
+        font.family: Config.Style.fontFamily.mono
+        font.pixelSize: Config.Style.fontSize.normal
     }
-    Tooltip {
+    Modules.Tooltip {
         id: dateTip
         anchorTo: clockWidget
         Text {
             text: Time.format("dddd MMMM d, yyyy")
-            color: Style.colors.fg
-            font.family: Style.fontFamily.mono
+            color: Config.Style.colors.fg
+            font.family: Config.Style.fontFamily.mono
         }
     }
 

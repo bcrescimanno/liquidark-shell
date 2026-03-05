@@ -2,17 +2,16 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import QtQuick
-import qs.Config
-import qs.Modules
+import qs.Config as Config
 
 WrapperMouseArea {
     cursorShape: Qt.PointingHandCursor
 
     Text {
-        color: Style.colors.fg
+        color: Config.Style.colors.fg
         font {
-            family: Style.fontFamily.icon
-            pixelSize: Style.fontSize.large
+            family: Config.Style.fontFamily.icon
+            pixelSize: Config.Style.fontSize.large
         }
         text: "\ue9ba"
     }
