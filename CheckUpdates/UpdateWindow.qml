@@ -61,7 +61,7 @@ Modules.AnimatedPopupWindow {
 
             Repeater {
                 model: mainWindow.repoUpdates
-                delegate: UpdateRow { modelData: modelData }
+                delegate: UpdateRow { pkg: modelData }
             }
         }
 
@@ -89,7 +89,7 @@ Modules.AnimatedPopupWindow {
 
             Repeater {
                 model: mainWindow.aurUpdates
-                delegate: UpdateRow { modelData: modelData }
+                delegate: UpdateRow { pkg: modelData }
             }
         }
 
@@ -167,7 +167,7 @@ Modules.AnimatedPopupWindow {
 
     // Reusable row for a single package entry
     component UpdateRow: Item {
-        property var modelData
+        property var pkg
 
         Layout.preferredHeight: pkgName.implicitHeight + 6
         Layout.fillWidth: true
@@ -177,7 +177,7 @@ Modules.AnimatedPopupWindow {
             id: pkgName
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: modelData.name
+            text: pkg?.name ?? ""
             color: Config.Style.colors.fg
             font {
                 bold: true
@@ -190,7 +190,7 @@ Modules.AnimatedPopupWindow {
             id: pkgVersion
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: modelData.version
+            text: pkg?.version ?? ""
             color: Config.Style.colors.fg
             opacity: 0.7
             font {
