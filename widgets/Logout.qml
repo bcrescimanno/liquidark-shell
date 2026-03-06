@@ -8,12 +8,12 @@ WrapperMouseArea {
     cursorShape: Qt.PointingHandCursor
 
     Text {
-        color: Config.Style.colors.fg
+        color: Config.Style.colors.negative
         font {
             family: Config.Style.fontFamily.icon
             pixelSize: Config.Style.fontSize.large
         }
-        text: "\ue9ba"
+        text: "\ue8ac"
     }
 
     Process {
