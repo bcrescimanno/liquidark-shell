@@ -8,6 +8,7 @@ AnimatedPopupWindow {
     bottomMargin: 10
     leftMargin: 20
     speed: Config.Style.animationDuration.fast
+    closeSpeed: Config.Style.animationDuration.fast
     delay: 250
 
     property Item anchorTo

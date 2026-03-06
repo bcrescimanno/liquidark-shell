@@ -20,8 +20,29 @@ PanelWindow {
     Rectangle {
         id: background
         anchors.fill: parent
-
         radius: Config.Style.radius.normal
+        opacity: 0
+        transform: Translate { id: barSlide; y: -20 }
+
+        Component.onCompleted: barEnter.start()
+
+        ParallelAnimation {
+            id: barEnter
+            NumberAnimation {
+                target: background; property: "opacity"
+                from: 0; to: 1
+                duration: Config.Style.animationDuration.slower
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Config.Style.animationCurves.emphasizedDecel
+            }
+            NumberAnimation {
+                target: barSlide; property: "y"
+                from: -20; to: 0
+                duration: Config.Style.animationDuration.slower
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Config.Style.animationCurves.expressiveDefaultSpatial
+            }
+        }
 
         RowLayout {
             id: leftPane
