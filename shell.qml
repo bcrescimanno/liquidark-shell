@@ -41,7 +41,8 @@ ShellRoot {
                 CheckUpdates.UpdateWindow {
                     id: archUpdates
                     anchor.window: topPanel
-                    anchor.rect.y: topPanel.implicitHeight - Config.Style.radius.normal
+                    anchor.rect.y: topPanel.implicitHeight
+                    anchor.rect.x: Config.Style.radius.normal
                 }
             },
             Widgets.WorkspaceIndicators {}

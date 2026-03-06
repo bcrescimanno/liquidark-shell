@@ -71,7 +71,9 @@ Modules.AnimatedPopupWindow {
 
             Repeater {
                 model: mainWindow.repoUpdates
-                delegate: UpdateRow { pkg: modelData }
+                delegate: UpdateRow {
+                    pkg: modelData
+                }
             }
         }
 
@@ -109,7 +111,9 @@ Modules.AnimatedPopupWindow {
 
             Repeater {
                 model: mainWindow.aurUpdates
-                delegate: UpdateRow { pkg: modelData }
+                delegate: UpdateRow {
+                    pkg: modelData
+                }
             }
         }
 
@@ -139,9 +143,9 @@ Modules.AnimatedPopupWindow {
                     family: Config.Style.fontFamily.sans
                     pixelSize: Config.Style.fontSize.small
                 }
-                text: Updates.lastCheck.getTime() > 0
-                    ? "Checked " + Qt.formatDateTime(Updates.lastCheck, "h:mm ap")
-                    : Updates.checking ? "Checking…" : "Not yet checked"
+                text: Updates.checking
+                    ? "Checking…"
+                    : "Next check at " + Qt.formatDateTime(Updates.nextCheck, "h:mm ap")
             }
 
             WrapperMouseArea {
@@ -162,12 +166,15 @@ Modules.AnimatedPopupWindow {
                     text: "\ue627"
 
                     Behavior on opacity {
-                        NumberAnimation { duration: Config.Style.animationDuration.fast }
+                        NumberAnimation {
+                            duration: Config.Style.animationDuration.fast
+                        }
                     }
 
                     NumberAnimation on rotation {
                         id: spinAnimation
-                        from: 0; to: 360
+                        from: 0
+                        to: 360
                         duration: 1000
                         loops: Animation.Infinite
                         running: false
