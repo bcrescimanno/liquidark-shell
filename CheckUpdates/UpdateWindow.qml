@@ -133,6 +133,7 @@ Modules.AnimatedPopupWindow {
             Layout.topMargin: mainWindow.repoUpdates.length > 0 || mainWindow.aurUpdates.length > 0 ? 10 : 0
             Layout.preferredHeight: refreshButton.implicitHeight
             Layout.fillWidth: true
+            Layout.minimumWidth: lastCheckedLabel.implicitWidth + refreshButton.implicitWidth + 16
 
             Text {
                 id: lastCheckedLabel
