@@ -9,12 +9,20 @@ Singleton {
 
     property string text: ""
     property bool loading: false
+    property int retryCount: 0
 
     Timer {
         interval: 15 * 60 * 1000
         repeat: true
         running: true
         triggeredOnStart: true
+        onTriggered: root.refresh()
+    }
+
+    Timer {
+        id: retryTimer
+        repeat: false
+        running: false
         onTriggered: root.refresh()
     }
 
@@ -27,9 +35,14 @@ Singleton {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
                     text = parseWeather(xhr.responseText.trim());
+                    retryCount = 0;
+                    retryTimer.stop();
                 } else {
-                    console.error("Weather fetch failed:", xhr.status);
-                    text = "—";
+                    console.error("Weather fetch failed:", xhr.status, "— retry", retryCount + 1);
+                    var delay = Math.min(15000 * Math.pow(2, retryCount), 5 * 60 * 1000);
+                    retryCount++;
+                    retryTimer.interval = delay;
+                    retryTimer.restart();
                 }
                 loading = false;
             }
