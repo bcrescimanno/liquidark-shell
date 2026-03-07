@@ -85,6 +85,18 @@ PopupWindow {
         }
     }
 
+    // When content height changes while the popup is open, snap to the new size.
+    Connections {
+        target: body
+        function onImplicitHeightChanged() {
+            if (root.opened) {
+                root.targetHeight = body.implicitHeight;
+                if (!openAnim.running)
+                    root.revealHeight = body.implicitHeight;
+            }
+        }
+    }
+
     // Spring open: window overshoots, background fills the excess, content stays put.
     NumberAnimation {
         id: openAnim
