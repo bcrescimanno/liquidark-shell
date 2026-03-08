@@ -67,7 +67,10 @@ Singleton {
 
             if (skew > 15000 && !wakeTimer.running) {
                 let timeUntilNext = root.nextCheck.getTime() - now;
-                if (timeUntilNext > 30000) {
+                if (timeUntilNext <= 0) {
+                    // Next check is overdue (nextCheck is in the past) — refresh immediately.
+                    root.refresh();
+                } else if (timeUntilNext > 30000) {
                     checkTimer.stop();
                     root.nextCheck = new Date(now + 30000);
                     wakeTimer.restart();
