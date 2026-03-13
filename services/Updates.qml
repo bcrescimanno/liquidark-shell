@@ -11,20 +11,32 @@ Singleton {
     property date lastCheck
     property date nextCheck: new Date()
     property bool checking: false
+    property int retryCount: 0
+    readonly property int maxRetries: 5
 
     Component.onCompleted: {
         nextCheck = new Date(Date.now() + checkTimer.interval);
         refresh();
     }
 
+    // Public entry point: resets retry state and restarts the hourly timer.
     function refresh() {
         if (checking) return;
+        retryCount = 0;
         wakeTimer.stop();
+        retryTimer.stop();
         checkTimer.restart();
         nextCheck = new Date(Date.now() + checkTimer.interval);
+        _startCheck();
+    }
+
+    // Internal: launches both check processes. Used by refresh() and retries.
+    function _startCheck() {
+        if (checking) return;
         checking = true;
         pending.repoData = undefined;
         pending.aurData = undefined;
+        pending.hasError = false;
         repoProcess.running = true;
         aurProcess.running = true;
     }
@@ -37,6 +49,14 @@ Singleton {
         repeat: true
         running: true
         onTriggered: root.refresh()
+    }
+
+    // Retry timer for failed checks (exponential backoff).
+    Timer {
+        id: retryTimer
+        repeat: false
+        running: false
+        onTriggered: root._startCheck()
     }
 
     // Fired 30 s after a resume-from-sleep event is detected.
@@ -84,15 +104,32 @@ Singleton {
         id: pending
         property var repoData
         property var aurData
+        property bool hasError: false
 
         function tryFinalize() {
-            if (repoData !== undefined && aurData !== undefined) {
+            if (repoData === undefined || aurData === undefined) return;
+
+            if (hasError) {
+                root.checking = false;
+                if (root.retryCount < root.maxRetries) {
+                    root.retryCount++;
+                    // Exponential backoff: 15 s, 30 s, 60 s, 120 s, 240 s
+                    let delay = Math.min(15000 * Math.pow(2, root.retryCount - 1), 300000);
+                    console.warn("Updates: check failed, retrying in " + (delay / 1000).toFixed(0) + " s (attempt " + root.retryCount + "/" + root.maxRetries + ")");
+                    retryTimer.interval = delay;
+                    retryTimer.start();
+                } else {
+                    console.error("Updates: check failed after " + root.maxRetries + " retries, keeping previous data");
+                }
+                // Don't overwrite updateData — preserve the last known good data.
+            } else {
                 root.updateData = repoData.concat(aurData);
                 root.lastCheck = new Date();
                 root.checking = false;
-                repoData = undefined;
-                aurData = undefined;
             }
+
+            repoData = undefined;
+            aurData = undefined;
         }
     }
 
@@ -107,6 +144,7 @@ Singleton {
                 pending.repoData = parseUpdates(repoStdout.text, "repo");
             } else {
                 console.error("checkupdates exited with code:", exitCode);
+                pending.hasError = true;
                 pending.repoData = [];
             }
             pending.tryFinalize();
@@ -126,6 +164,7 @@ Singleton {
                 pending.aurData = parseUpdates(aurStdout.text, "aur");
             } else {
                 console.error("yay --aur exited with code:", exitCode);
+                pending.hasError = true;
                 pending.aurData = [];
             }
             pending.tryFinalize();
