@@ -3,6 +3,7 @@ import Quickshell
 import QtQuick
 import qs.CheckUpdates as CheckUpdates
 import qs.Config as Config
+import qs.MusicPlayer as MusicPlayer
 import qs.services
 import qs.widgets as Widgets
 
@@ -45,7 +46,22 @@ ShellRoot {
                     anchor.rect.x: Config.Style.radius.normal
                 }
             },
-            Widgets.WorkspaceIndicators {}
+            Widgets.WorkspaceIndicators {},
+            MusicPlayer.Indicator {
+                id: musicIndicator
+                onClicked: musicPlayer.open = !musicPlayer.open
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Escape && musicPlayer.open)
+                        musicPlayer.open = false;
+                }
+
+                MusicPlayer.PlayerWindow {
+                    id: musicPlayer
+                    anchor.window: topPanel
+                    anchor.rect.y: topPanel.implicitHeight
+                    anchor.rect.x: musicIndicator.x + musicIndicator.parent.x
+                }
+            }
         ]
 
         right: [
