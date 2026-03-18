@@ -87,11 +87,13 @@ Singleton {
 
             if (skew > 15000 && !wakeTimer.running) {
                 let timeUntilNext = root.nextCheck.getTime() - now;
+                console.log("Updates: resume detected (skew " + (skew / 1000).toFixed(0) + " s), next check in " + (timeUntilNext / 1000).toFixed(0) + " s");
                 if (timeUntilNext <= 0) {
                     // Next check is overdue (nextCheck is in the past) — refresh immediately.
                     root.refresh();
                 } else if (timeUntilNext > 30000) {
-                    checkTimer.stop();
+                    // Don't stop checkTimer — if refresh() is blocked (checking=true), checkTimer
+                    // must keep running or no future checks will ever fire.
                     root.nextCheck = new Date(now + 30000);
                     wakeTimer.restart();
                 }
@@ -126,6 +128,7 @@ Singleton {
                 root.updateData = repoData.concat(aurData);
                 root.lastCheck = new Date();
                 root.checking = false;
+                console.log("Updates: check complete — " + root.updateData.length + " update(s) available");
             }
 
             repoData = undefined;
@@ -138,10 +141,12 @@ Singleton {
         command: ['checkupdates', '--nocolor']
         running: false
 
-        // exit 0 = updates available, 1 = up to date, 2+ = error
+        // exit 0 = updates available, 1 = error (network etc.), 2 = no updates
         onExited: exitCode => {
-            if (exitCode === 0 || exitCode === 1) {
+            if (exitCode === 0) {
                 pending.repoData = parseUpdates(repoStdout.text, "repo");
+            } else if (exitCode === 2) {
+                pending.repoData = [];
             } else {
                 console.error("checkupdates exited with code:", exitCode);
                 pending.hasError = true;
@@ -158,19 +163,23 @@ Singleton {
         command: ['yay', '-Qu', '--aur']
         running: false
 
-        // exit 0 = updates available, 1 = up to date, 2+ = error
+        // exit 0 = updates available; non-zero = no updates OR error.
+        // Distinguish via stderr: yay writes to stderr on error, not on clean "no updates".
         onExited: exitCode => {
-            if (exitCode === 0 || exitCode === 1) {
+            if (exitCode === 0) {
                 pending.aurData = parseUpdates(aurStdout.text, "aur");
-            } else {
-                console.error("yay --aur exited with code:", exitCode);
+            } else if (aurStderr.text.trim()) {
+                console.error("yay --aur exited with code " + exitCode + ": " + aurStderr.text.trim());
                 pending.hasError = true;
+                pending.aurData = [];
+            } else {
                 pending.aurData = [];
             }
             pending.tryFinalize();
         }
 
         stdout: StdioCollector { id: aurStdout }
+        stderr: StdioCollector { id: aurStderr }
     }
 
     function parseUpdates(text, source) {
