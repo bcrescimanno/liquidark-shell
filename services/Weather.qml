@@ -47,7 +47,7 @@ Singleton {
                 loading = false;
             }
         };
-        xhr.open("GET", "https://wttr.in/" + Config.Settings.weatherLocation + "?format=%c+%C+%t+%S+%s");
+        xhr.open("GET", "https://wttr.in/" + Config.Settings.weatherLocation + "?format=%c+%C+%t+%S+%s&u");
         xhr.send();
     }
 
