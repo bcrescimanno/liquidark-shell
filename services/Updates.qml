@@ -136,6 +136,37 @@ Singleton {
         }
     }
 
+    // Watches pacman.log for completed transactions and triggers a refresh.
+    // Uses tail -n 0 so only lines written after shell startup are seen.
+    Process {
+        id: pacmanLogWatcher
+        command: ['tail', '-n', '0', '-f', '/var/log/pacman.log']
+        running: true
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                // Match ALPM lines that indicate packages changed on disk
+                if (/\[ALPM\] (upgraded|installed|removed|reinstalled) /.test(data)) {
+                    pacmanDebounce.restart();
+                }
+            }
+        }
+    }
+
+    // Debounce: a single `pacman -Syu` emits many ALPM lines; wait for them
+    // to settle before refreshing so we run checkupdates only once.
+    Timer {
+        id: pacmanDebounce
+        interval: 5000
+        repeat: false
+        running: false
+        onTriggered: {
+            console.log("Updates: pacman transaction detected, refreshing");
+            root.refresh();
+        }
+    }
+
     Process {
         id: repoProcess
         command: ['checkupdates', '--nocolor']
