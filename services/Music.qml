@@ -10,7 +10,8 @@ Singleton {
 
     readonly property MprisPlayer player: {
         let players = Mpris.players.values;
-        return players.length > 0 ? players[0] : null;
+        if (players.length === 0) return null;
+        return players.find(p => p.isPlaying) ?? players[0];
     }
     readonly property bool hasPlayer: player !== null
     readonly property bool isPlaying: player?.isPlaying ?? false
