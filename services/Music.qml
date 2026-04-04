@@ -104,6 +104,7 @@ Singleton {
     onTrackTitleChanged: {
         position = 0;
         duration = 0;
+        _readDuration();
         _detectFormat();
     }
     onPlayerChanged: {
@@ -112,17 +113,22 @@ Singleton {
         _detectFormat();
     }
 
+    function _readDuration() {
+        if (!player) return;
+        let raw = player.metadata["mpris:length"] ?? 0;
+        if (raw > 0) {
+            // MPRIS spec says microseconds, but some players (e.g. mpd-mpris) report seconds.
+            // No real song is under 10ms, so values < 10000 must already be in seconds.
+            duration = raw >= 10000 ? raw / 1000000.0 : raw;
+        } else if (player.lengthSupported) {
+            duration = player.length;
+        }
+    }
+
     Connections {
         target: root.player
         enabled: root.player !== null
-        function onMetadataChanged() {
-            let us = root.player.metadata["mpris:length"] ?? 0;
-            if (us > 0) {
-                root.duration = us / 1000000.0;
-            } else if (root.player.lengthSupported) {
-                root.duration = root.player.length;
-            }
-        }
+        function onMetadataChanged() { root._readDuration(); }
     }
 
     readonly property list<string> _losslessExtensions: ["flac", "wav", "alac", "ape", "aiff", "aif", "wv", "dsf", "dff"]
