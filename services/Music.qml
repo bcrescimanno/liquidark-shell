@@ -14,6 +14,7 @@ Singleton {
         return players.find(p => p.isPlaying) ?? players[0];
     }
     readonly property bool hasPlayer: player !== null
+    readonly property bool hasTrack: trackTitle !== "" || trackArtist !== ""
     readonly property bool isPlaying: player?.isPlaying ?? false
 
     readonly property string trackTitle: player?.trackTitle ?? ""

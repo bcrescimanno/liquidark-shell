@@ -8,7 +8,7 @@ WrapperMouseArea {
     id: indicator
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    visible: Music.hasPlayer
+    visible: Music.hasTrack
 
     Row {
         id: row
