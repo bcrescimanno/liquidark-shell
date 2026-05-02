@@ -48,6 +48,8 @@ Singleton {
             }
         };
         xhr.open("GET", "https://wttr.in/" + Config.Settings.weatherLocation + "?format=%c+%C+%t+%S+%s&u");
+        // wttr.in serves an HTML page unless the User-Agent looks like a CLI client.
+        xhr.setRequestHeader("User-Agent", "curl/8.0");
         xhr.send();
     }
 
