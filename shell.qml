@@ -69,6 +69,7 @@ ShellRoot {
             Widgets.SystemTray {},
             Widgets.Weather {},
             Widgets.ThemePicker {},
+            Widgets.Battery {},
             Widgets.Clock {},
             Widgets.Logout {}
         ]
