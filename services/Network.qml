@@ -3,63 +3,61 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Networking
 
 Singleton {
     id: root
 
-    readonly property bool connected: _state === "connected"
-    property string ssid: ""
-    property int strength: 0          // 0–100, NetworkManager's SIGNAL
+    readonly property bool connected: !!_activeNet
+    readonly property string ssid: _activeNet ? _activeNet.name : ""
+    readonly property int strength: _activeNet ? Math.round(_activeNet.signalStrength * 100) : 0
     property string ipAddress: ""
 
-    property string _state: ""
-
-    function refresh() {
-        if (!poll.running) poll.running = true;
+    // First wifi device, and its currently-connected network (if any). Both are
+    // reactive: Quickshell.Networking emits change signals as devices/networks
+    // connect and signal strength updates, so the properties above track live.
+    readonly property var _wifiDev: {
+        let list = Networking.devices ? Networking.devices.values : [];
+        return list.find(d => d.type === DeviceType.Wifi) ?? null;
+    }
+    readonly property var _activeNet: {
+        if (!_wifiDev) return null;
+        let nets = _wifiDev.networks ? _wifiDev.networks.values : [];
+        return nets.find(n => n.connected) ?? null;
     }
 
-    // Periodic refresh keeps the signal-strength reading current.
+    // Quickshell.Networking doesn't expose IP addresses, so read the active
+    // interface's IPv4 with `ip`. Refresh on connect/network change and on a slow
+    // timer (DHCP may not have assigned an address the instant we connect).
+    onConnectedChanged: _refreshIp()
+    onSsidChanged: _refreshIp()
+    Component.onCompleted: _refreshIp()
+
     Timer {
-        interval: 10000
+        interval: 15000
         repeat: true
-        running: true
-        triggeredOnStart: true
-        onTriggered: root.refresh()
+        running: root.connected
+        onTriggered: root._refreshIp()
     }
 
-    // Quickshell ships no NetworkManager service, so `nmcli monitor` is our push
-    // channel: it emits a line on every connectivity change. A connect/disconnect
-    // produces a burst of lines, so debounce before re-polling to read the
-    // settled state once rather than mid-transition.
-    Process {
-        id: monitor
-        command: ["nmcli", "monitor"]
-        running: true
-        stdout: SplitParser {
-            onRead: debounce.restart()
+    function _refreshIp() {
+        if (!connected || !_wifiDev) {
+            ipAddress = "";
+            return;
         }
-    }
-
-    Timer {
-        id: debounce
-        interval: 500
-        repeat: false
-        onTriggered: root.refresh()
+        ipProc.iface = _wifiDev.name;
+        ipProc.running = true;
     }
 
     Process {
-        id: poll
+        id: ipProc
+        property string iface: ""
         running: false
-        // Emits one line per field: state, ssid, signal, ip. Only double quotes
-        // and bracket-escapes inside so the whole script can be single-quoted here.
-        command: ["sh", "-c", 'dev=$(nmcli -t -f DEVICE,TYPE,STATE dev | grep ":wifi:connected" | cut -d: -f1 | head -1); if [ -z "$dev" ]; then echo disconnected; exit 0; fi; echo connected; nmcli -g GENERAL.CONNECTION dev show "$dev"; sig=$(nmcli -t -f IN-USE,SIGNAL dev wifi list ifname "$dev" | grep "^[*]:" | cut -d: -f2 | head -1); echo "$sig"; ip=$(nmcli -g IP4.ADDRESS dev show "$dev" | cut -d/ -f1 | head -1); echo "$ip"']
-        stdout: StdioCollector { id: out }
+        command: ["ip", "-4", "-o", "addr", "show", "dev", iface]
+        stdout: StdioCollector { id: ipOut }
         onExited: {
-            let lines = out.text.split("\n");
-            root._state = (lines[0] || "").trim();
-            root.ssid = (lines[1] || "").trim();
-            root.strength = parseInt(lines[2]) || 0;
-            root.ipAddress = (lines[3] || "").trim();
+            let m = ipOut.text.match(/inet (\d+\.\d+\.\d+\.\d+)/);
+            root.ipAddress = m ? m[1] : "";
         }
     }
 }
