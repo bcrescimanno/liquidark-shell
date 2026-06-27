@@ -8,71 +8,83 @@ import qs.services
 import qs.widgets as Widgets
 
 ShellRoot {
-    TopPanel {
-        id: topPanel
-        margins {
-            top: 10
-            left: 20
-            right: 20
-        }
+    Variants {
+        // Recreate the panel per output. On resume, Hyprland/NVIDIA tears down and
+        // recreates every output ("There are no outputs - creating placeholder
+        // screen" in the log); a bare PanelWindow does not re-anchor to the new
+        // output and the bar silently disappears. Variants reactively destroys and
+        // rebuilds a panel as screens come and go, so it returns on resume.
+        model: Quickshell.screens
 
-        implicitHeight: 40
-        backgroundColor: Config.Style.colors.panelBg
+        TopPanel {
+            id: topPanel
+            required property var modelData
+            screen: modelData
 
-        focusable: true
-
-        left: [
-            CheckUpdates.Indicator {
-                id: updatesIndicator
-                focus: true
-                onClicked: () => {
-                    if (Updates.updateData.length > 0 || Updates.lastCheck.getTime() > 0) {
-                        archUpdates.open = !archUpdates.open;
-                    } else {
-                        Updates.refresh();
-                    }
-                }
-
-                Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Escape && archUpdates.open) {
-                        archUpdates.open = false;
-                    }
-                }
-
-                CheckUpdates.UpdateWindow {
-                    id: archUpdates
-                    anchor.window: topPanel
-                    anchor.rect.y: topPanel.implicitHeight
-                    anchor.rect.x: Config.Style.radius.normal
-                }
-            },
-            Widgets.WorkspaceIndicators {},
-            MusicPlayer.Indicator {
-                id: musicIndicator
-                onClicked: musicPlayer.open = !musicPlayer.open
-                Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Escape && musicPlayer.open)
-                        musicPlayer.open = false;
-                }
-
-                MusicPlayer.PlayerWindow {
-                    id: musicPlayer
-                    anchor.window: topPanel
-                    anchor.rect.y: topPanel.implicitHeight
-                    anchor.rect.x: musicIndicator.x + musicIndicator.parent.x
-                }
+            margins {
+                top: 10
+                left: 20
+                right: 20
             }
-        ]
 
-        right: [
-            Widgets.Volume {},
-            Widgets.SystemTray {},
-            Widgets.Weather {},
-            Widgets.ThemePicker {},
-            Widgets.Wifi {},
-            Widgets.Battery {},
-            Widgets.Clock {},
-            Widgets.Logout {}
-        ]
+            implicitHeight: 40
+            backgroundColor: Config.Style.colors.panelBg
+
+            focusable: true
+
+            left: [
+                CheckUpdates.Indicator {
+                    id: updatesIndicator
+                    focus: true
+                    onClicked: () => {
+                        if (Updates.updateData.length > 0 || Updates.lastCheck.getTime() > 0) {
+                            archUpdates.open = !archUpdates.open;
+                        } else {
+                            Updates.refresh();
+                        }
+                    }
+
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Escape && archUpdates.open) {
+                            archUpdates.open = false;
+                        }
+                    }
+
+                    CheckUpdates.UpdateWindow {
+                        id: archUpdates
+                        anchor.window: topPanel
+                        anchor.rect.y: topPanel.implicitHeight
+                        anchor.rect.x: Config.Style.radius.normal
+                    }
+                },
+                Widgets.WorkspaceIndicators {},
+                MusicPlayer.Indicator {
+                    id: musicIndicator
+                    onClicked: musicPlayer.open = !musicPlayer.open
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Escape && musicPlayer.open)
+                            musicPlayer.open = false;
+                    }
+
+                    MusicPlayer.PlayerWindow {
+                        id: musicPlayer
+                        anchor.window: topPanel
+                        anchor.rect.y: topPanel.implicitHeight
+                        anchor.rect.x: musicIndicator.x + musicIndicator.parent.x
+                    }
+                }
+            ]
+
+            right: [
+                Widgets.Volume {},
+                Widgets.SystemTray {},
+                Widgets.Weather {},
+                Widgets.ThemePicker {},
+                Widgets.Wifi {},
+                Widgets.Battery {},
+                Widgets.Clock {},
+                Widgets.Logout {}
+            ]
+        }
     }
 }
